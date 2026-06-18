@@ -1,0 +1,22 @@
+GET http://localhost:5000/
+
+###
+// GET Users
+GET http://localhost:5000/users
+
+###
+
+// POST login
+POST http://localhost:5000/login
+Content-Type: application/json
+
+{
+    "email": "teste@usuario.com",
+    "password": "teste"
+}
+
+###
+
+GET http://localhost:5000/perfil
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgwMDE3NDI2LCJleHAiOjE3ODAwMjEwMjZ9.30uG-iw430jzvEefdTgwUKVAUN-wG90-NWO65jNtOOA
+
