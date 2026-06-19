@@ -1,30 +1,49 @@
 import { api } from "@/api/axiosInstance";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
+import { get } from "http";
+import { useRouter } from "next/router";
 import { useState } from "react";
 
 export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const router = useRouter();
+
+  const handlePerfil = async () => {
+    try {
+      const response = await api.get("/perfil");
+      console.log("response", response);
+      router.push("/perfil");
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        router.push("/perfil");
+        return console.warn(error.response?.data?.message);
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user_token");
+    console.log("Token removido do localStorage");
+    if (!localStorage.getItem("user_token")) {
+      console.log("Logged feito com sucesso");
+    }
+  };
+
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("email", email);
     console.log("password", password);
 
-    // const handlePerfil = async () => await api.get("/pefil", {})};
-
     try {
-      const response = await api.post("/login", { email, password });
-      console.log("response", response);
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        return console.warn(error.response?.data?.message);
+      const response: AxiosResponse<{ auth: boolean; token: string }> =
+        await api.post("/login", { email, password });
+
+      if (response.data.auth) {
+        const token = response.data.token;
+        localStorage.setItem("user_token", token);
       }
-    }
-
-    try {
-      const response = await api.get("/perfil");
-      console.log("response", response);
     } catch (error) {
       if (error instanceof AxiosError) {
         return console.warn(error.response?.data?.message);
@@ -34,7 +53,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex items-center justify-center min-h-screen w-full">
+      <div className="flex flex-col gap-10 items-center justify-center min-h-screen w-full">
         <form
           onSubmit={handleSubmit}
           className="flex flex-col items-center justify-center max-w-2xl"
@@ -71,13 +90,24 @@ export default function Home() {
         </form>
         <div className="flex">
           <button
-            className="p-4 w-100 rounded-lg bg-sky-900 hover:bg-sky-600 transition text-gray-200 text-lg"
-            onClick={async () => await api.get("/perfil", {})}
+            className="p-4 w-full rounded-lg bg-sky-900 hover:bg-sky-600 transition text-gray-200 text-lg"
+            onClick={handlePerfil}
           >
-            Perfil
+            Rota /perfil
+          </button>
+        </div>
+        <div className="flex">
+          <button
+            className="p-4 w-full rounded-lg bg-sky-900 hover:bg-sky-600 transition text-gray-200 text-lg"
+            onClick={handleLogout}
+          >
+            logout
           </button>
         </div>
       </div>
     </>
   );
 }
+
+// #### CRIAR EM SEQUENCIA ####
+// Criar um terceiro botão chamado "Logout" onde deverá remover o token do LocalStorage
