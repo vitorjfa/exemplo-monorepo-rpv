@@ -1,6 +1,5 @@
 import { api } from "@/api/axiosInstance";
 import { AxiosError, AxiosResponse } from "axios";
-import { get } from "http";
 import { useRouter } from "next/router";
 import { useState } from "react";
 
@@ -9,6 +8,10 @@ export default function Home() {
   const [password, setPassword] = useState("");
 
   const router = useRouter();
+
+  const handleCadastro = () => {
+    router.push("/cadastro");
+  };
 
   const handlePerfil = async () => {
     try {
@@ -26,15 +29,14 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem("user_token");
     console.log("Token removido do localStorage");
+
     if (!localStorage.getItem("user_token")) {
-      console.log("Logged feito com sucesso");
+      console.log("Logout feito com sucesso");
     }
   };
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("email", email);
-    console.log("password", password);
 
     try {
       const response: AxiosResponse<{ auth: boolean; token: string }> =
@@ -42,6 +44,7 @@ export default function Home() {
 
       if (response.data.auth) {
         const token = response.data.token;
+
         localStorage.setItem("user_token", token);
       }
     } catch (error) {
@@ -59,55 +62,53 @@ export default function Home() {
           className="flex flex-col items-center justify-center max-w-2xl"
         >
           <div className="flex flex-col mb-8">
-            <label htmlFor="email">E-mail</label>
+            <label>Email</label>
+
             <input
-              className="border boder-slate-800 rounded-sm px-4 py-2 text-lg"
-              placeholder="Enter your e-mail address"
+              className="border rounded-sm px-4 py-2 text-lg"
               type="text"
-              name="email"
-              id="email"
               onChange={(e) => setEmail(e.target.value)}
               value={email}
             />
           </div>
+
           <div className="flex flex-col mb-8">
-            <label htmlFor="password">Password</label>
+            <label>Password</label>
+
             <input
-              className="border boder-slate-800 rounded-sm px-4 py-2 text-lg"
-              placeholder="Type your password"
+              className="border rounded-sm px-4 py-2 text-lg"
               type="password"
-              name="password"
-              id="password"
               onChange={(e) => setPassword(e.target.value)}
               value={password}
             />
           </div>
-          <div className="w-full">
-            <button className="p-4 w-full rounded-lg bg-sky-900 hover:bg-sky-600 transition text-gray-200 text-lg">
-              Enviar
-            </button>
-          </div>
+
+          <button className="p-4 w-full rounded-lg bg-sky-900 hover:bg-sky-600 text-gray-200">
+            Enviar
+          </button>
         </form>
-        <div className="flex">
-          <button
-            className="p-4 w-full rounded-lg bg-sky-900 hover:bg-sky-600 transition text-gray-200 text-lg"
-            onClick={handlePerfil}
-          >
-            Rota /perfil
-          </button>
-        </div>
-        <div className="flex">
-          <button
-            className="p-4 w-full rounded-lg bg-sky-900 hover:bg-sky-600 transition text-gray-200 text-lg"
-            onClick={handleLogout}
-          >
-            logout
-          </button>
-        </div>
+
+        <button
+          className="p-4 rounded-lg bg-sky-900 hover:bg-sky-600 text-gray-200"
+          onClick={handleCadastro}
+        >
+          Rota /cadastro
+        </button>
+
+        <button
+          className="p-4 rounded-lg bg-sky-900 hover:bg-sky-600 text-gray-200"
+          onClick={handlePerfil}
+        >
+          Rota /perfil
+        </button>
+
+        <button
+          className="p-4 rounded-lg bg-sky-900 hover:bg-sky-600 text-gray-200"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
       </div>
     </>
   );
 }
-
-// #### CRIAR EM SEQUENCIA ####
-// Criar um terceiro botão chamado "Logout" onde deverá remover o token do LocalStorage
