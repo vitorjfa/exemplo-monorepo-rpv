@@ -29,3 +29,9 @@ Authorization: Bearer {{jwt}}
 ### 
 GET {{BASE_URL}}/users?q=daniel&page=1&limit=2
 Authorization: Bearer {{jwt}}
+
+###
+GET {{BASE_URL}}/users/2
+
+###
+DELETE {{BASE_URL}}/users/3

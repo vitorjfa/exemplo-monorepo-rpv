@@ -3,6 +3,8 @@ import cors from "cors";
 import { login } from "./controllers/authController";
 import { AuthRequest, verifyJWT } from "./middleware/authMiddleware";
 import { db } from "./database/connection";
+import { config } from "node:process";
+import { Knex } from "knex";
 
 const app = express();
 const PORT = 5000;
@@ -26,32 +28,83 @@ app.get("/perfil", verifyJWT, (req: AuthRequest, res: Response) => {
   res.status(200).json({ message: `Seja bem vindo! Seu id é ${req.userId}` });
 });
 
-app.get("/users", (req, res) => {
+app.get("/users", verifyJWT, async (req, res) => {
+  const { q, limit } = req.query;
+  console.log("query params", req.query);
   // return res.status(400).json({ message: "Não habilitado!" })
+
+  const baseQuery: Knex = await db("users");
+  console.log("baseQuery", baseQuery);
+
+  if (q) {
+    baseQuery.whereILike("name", `%${q}%`);
+  }
+
+  const query = await db
+    .select("id", "name", "email")
+    .from("users")
+    .limit(parseInt(limit as string) || 2);
+
+  const mappedUsers = query.map((user) => {
+    return { ...user, idAjustado: user.id + 10 };
+  });
+
+  console.log(mappedUsers);
+
+  // const query = await db.select('id', 'name', 'email').from('users').whereILike('name', `%${q}%`).limit(parseInt(limit as string) || 10)
+  console.log("retorno da query", query);
   res.status(200).json({
     data: {
       infos: {
-        users: [
-          { name: "Daniel", age: 35 },
-          { name: "Joel", age: 45 },
-        ],
+        users: query,
+        totalUsers: query.length,
+        totalPages: 4,
+        actualPage: 1,
+        itensPage: 2,
       },
     },
   });
 });
 
-app.get("/user/:id", async (req, res) => {
+app.get("/users/:id", async (req, res) => {
+  const { id } = req.params;
+
+  console.log("nova requisicao");
+
+  const query = await db.select("name", "email", "id").from("users").where({
+    id,
+  });
+
+  console.log("query length", query.length === 0);
+
+  if (query.length === 0) {
+    return res.status(204).json({ message: "Usuario não encontrado !" });
+  }
+
+  return res.status(200).json({
+    message: "Usuário encontrado com sucesso!",
+    data: {
+      info: {
+        users: query,
+      },
+    },
+  });
+});
+
+app.delete("/users/:id", async (req, res) => {
   const { id } = req.params;
 
   const userExists = await db.select("*").from("users").where({ id });
 
   if (userExists.length === 0) {
-    return res.status(404).json({ message: "Usuário não encontrado" });
+    return res.status(400).json({ message: "Usuário não encontrado!" });
   }
-  const deletedUser = await db.delete().from("users").where({ id });
 
-  console.log("Remover", deletedUser);
-  return res.status(200).json({ mensagem: "Usuário removido com sucesso!" });
+  const deleteUser = await db.delete().from("users").where({ id });
+
+  console.log("Remover", deleteUser);
+
+  return res.status(200).json({ message: "Usuário removido com sucesso !" });
 });
 
 app.post("/user/register", async (req, res) => {
@@ -66,9 +119,11 @@ app.post("/user/register", async (req, res) => {
   const emailExists = emails[0].length > 0 ? true : false;
 
   if (emailExists) {
-    return res.status(412).json({
-      message: "A requisição não pode ser concluída. Email já cadastrado.",
-    });
+    return res
+      .status(412)
+      .json({
+        message: "A requisição não pode ser concluída. Email já cadastrado.",
+      });
   }
 
   await db.raw(
